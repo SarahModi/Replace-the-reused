@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Password Generator</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: #0d1117;
+      color: #c9d1d9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+      padding: 20px;
+    }
+    h1 {
+      font-weight: 600;
+      color: #58a6ff;
+      margin-bottom: 10px;
+    }
+    .container {
+      background: #161b22;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(88,166,255,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #21262d;
+      color: #fff;
+      margin-bottom: 15px;
+      outline: none;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #238636;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #2ea043;
+    }
+    #result {
+      margin-top: 15px;
+      background: #0d1117;
+      padding: 10px;
+      border-radius: 8px;
+      word-break: break-all;
+      font-family: monospace;
+    }
+    #strength {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #8b949e;
+    }
+    .copy-btn {
+      background: #30363d;
+      color: #58a6ff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      float: right;
+    }
+  </style>
+</head>
+<body>
+  <h1>Smart Password Generator</h1>
+  <div class="container">
+    <input type="text" id="userWords" placeholder="Enter words separated by commas (e.g. cat,summer,moon)" />
+    <button id="generateBtn">Generate Password</button>
+    <div id="resultBox" style="display:none;">
+      <div id="result"></div>
+      <span id="copyBtn" class="copy-btn">Copy</span>
+      <div id="strength"></div>
+    </div>
+    <p style="font-size:12px;margin-top:10px;color:#8b949e;">All passwords are generated locally. Nothing is stored or shared.</p>
+  </div>
+
+  <script>
+    function generatePassword(words) {
+      const list = words.split(',').map(w => w.trim()).filter(Boolean);
+      if (list.length === 0) return "Please enter some words first.";
+
+      const symbols = ['!', '@', '#', '$', '%', '&', '*'];
+      const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+      const randomNum = Math.floor(Math.random() * 1000);
+
+      // Random capitalization & shuffle
+      const mixed = list.map(word => {
+        let chars = word.split('');
+        for (let i = 0; i < chars.length; i++) {
+          if (Math.random() > 0.5) chars[i] = chars[i].toUpperCase();
+        }
+        return chars.join('');
+      });
+      mixed.sort(() => Math.random() - 0.5);
+
+      // Combine words + randomness
+      const base = mixed.join('');
+      const salt = Math.random().toString(36).substring(2, 6);
+      const password = base + randomSymbol + randomNum + salt;
+      return password;
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      const userWords = document.getElementById('userWords').value;
+      const password = generatePassword(userWords);
+      const resultBox = document.getElementById('resultBox');
+      const result = document.getElementById('result');
+      const strength = document.getElementById('strength');
+
+      if (password.startsWith("Please")) {
+        resultBox.style.display = 'block';
+        result.textContent = password;
+        strength.textContent = '';
+        return;
+      }
+
+      resultBox.style.display = 'block';
+      result.textContent = password;
+
+      const analysis = zxcvbn(password);
+      strength.innerHTML = `
+        <strong>Strength:</strong> ${['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][analysis.score]}<br>
+        Estimated crack time: ${analysis.crack_times_display.offline_fast_hashing_1e10_per_second}
+      `;
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      const password = document.getElementById('result').textContent;
+      navigator.clipboard.writeText(password);
+      document.getElementById('copyBtn').textContent = "Copied!";
+      setTimeout(() => {
+        document.getElementById('copyBtn').textContent = "Copy";
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
