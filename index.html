@@ -90,7 +90,6 @@
     <div id="resultBox" style="display:none;">
       <div id="result"></div>
       <span id="copyBtn" class="copy-btn">Copy</span>
-      <div id="badge" class="strength-badge" style="display:none;"></div>
       <div id="strength"></div>
     </div>
     <p style="font-size:12px;margin-top:10px;color:#8b949e;">All passwords are generated locally. Nothing is stored or shared.</p>
@@ -139,22 +138,11 @@
       resultBox.style.display = 'block';
       result.textContent = password;
 
-     const analysis = zxcvbn(password);
-
-// bits of entropy rounded
-const entropy = Math.round(analysis.entropy);
-const label = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][analysis.score];
-
-// badge update
-const badge = document.getElementById('badge');
-badge.style.display = 'inline-block';
-badge.className = `strength-badge strength-${analysis.score}`;
-badge.textContent = `🔒 ${entropy} bits entropy ✅ ${label}`;
-
-strength.innerHTML = `
-  <strong>Estimated crack time:</strong> ${analysis.crack_times_display.offline_fast_hashing_1e10_per_second}
-`;
-
+      const analysis = zxcvbn(password);
+      strength.innerHTML = `
+        <strong>Strength:</strong> ${['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][analysis.score]}<br>
+        Estimated crack time: ${analysis.crack_times_display.offline_fast_hashing_1e10_per_second}
+      `;
     });
 
     document.getElementById('copyBtn').addEventListener('click', () => {
