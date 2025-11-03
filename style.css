@@ -1,0 +1,110 @@
+/* Neumorphic Professional Styling */
+
+* {
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: #e0e5ec; /* light grey background for neumorphism */
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  flex-direction: column;
+  padding: 20px;
+}
+
+h1 {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.container {
+  background: #e0e5ec;
+  padding: 30px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 8px 8px 15px #a3b1c6, -8px -8px 15px #ffffff;
+}
+
+input {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  background: #e0e5ec;
+  color: #333;
+  margin-bottom: 15px;
+  outline: none;
+  box-shadow: inset 5px 5px 10px #a3b1c6, inset -5px -5px 10px #ffffff;
+  transition: all 0.2s ease;
+}
+
+input:focus {
+  box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  background: #e0e5ec;
+  color: #333;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 5px 5px 10px #a3b1c6, -5px -5px 10px #ffffff;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+}
+
+#resultBox {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 12px;
+  background: #e0e5ec;
+  box-shadow: inset 5px 5px 10px #a3b1c6, inset -5px -5px 10px #ffffff;
+}
+
+#result {
+  font-family: monospace;
+  word-break: break-all;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+#strength {
+  font-size: 14px;
+  color: #555;
+}
+
+.copy-btn {
+  background: #e0e5ec;
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  float: right;
+  box-shadow: 3px 3px 6px #a3b1c6, -3px -3px 6px #ffffff;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  box-shadow: inset 2px 2px 4px #a3b1c6, inset -2px -2px 4px #ffffff;
+}
+
+p {
+  font-size: 12px;
+  margin-top: 10px;
+  color: #555;
+  text-align: center;
+}
