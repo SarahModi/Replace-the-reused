@@ -1,157 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Password Generator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Replace-the-Reused</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
-    }
-    body {
-      background: #0d1117;
-      color: #c9d1d9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      flex-direction: column;
-      padding: 20px;
-    }
-    h1 {
-      font-weight: 600;
-      color: #58a6ff;
-      margin-bottom: 10px;
-    }
-    .container {
-      background: #161b22;
-      padding: 25px;
-      border-radius: 16px;
-      box-shadow: 0 0 20px rgba(88,166,255,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #21262d;
-      color: #fff;
-      margin-bottom: 15px;
-      outline: none;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #238636;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: #2ea043;
-    }
-    #result {
-      margin-top: 15px;
-      background: #0d1117;
-      padding: 10px;
-      border-radius: 8px;
-      word-break: break-all;
-      font-family: monospace;
-    }
-    #strength {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #8b949e;
-    }
-    .copy-btn {
-      background: #30363d;
-      color: #58a6ff;
-      padding: 6px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      float: right;
-    }
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background:#0d1117; color:#c9d1d9; display:flex; flex-direction:column; align-items:center; padding:20px; min-height:100vh; }
+    h1 { color:#58a6ff; margin-bottom:10px; }
+    .container { background:#161b22; padding:25px; border-radius:16px; width:100%; max-width:450px; margin-bottom:20px; }
+    input, select, button { width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:none; outline:none; }
+    input, select { background:#21262d; color:#fff; }
+    button { background:#238636; color:#fff; font-weight:600; cursor:pointer; transition:.2s; }
+    button:hover { background:#2ea043; }
+    #result, #vaultOutput { background:#0d1117; padding:10px; border-radius:8px; word-break:break-all; margin-bottom:10px; font-family:monospace; }
+    .copy-btn { background:#30363d; color:#58a6ff; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px; float:right; }
+    #strength { font-size:14px; color:#8b949e; }
   </style>
 </head>
 <body>
-  <h1>Smart Password Generator</h1>
-  <div class="container">
-    <input type="text" id="userWords" placeholder="Enter words separated by commas (e.g. cat,summer,moon)" />
+  <h1>Replace-the-Reused</h1>
+
+  <!-- MASTER PASSWORD LOGIN -->
+  <div class="container" id="masterBox">
+    <input type="password" id="masterPassword" placeholder="Enter master password">
+    <button id="unlockVaultBtn">Unlock Vault</button>
+    <p style="font-size:12px;color:#8b949e;">Master password is never stored. Remember it carefully.</p>
+  </div>
+
+  <!-- GENERATOR & VAULT -->
+  <div class="container" id="vaultContainer" style="display:none;">
+    
+    <!-- PASSWORD GENERATOR -->
+    <h2>Generate Password</h2>
+    <input type="text" id="userWords" placeholder="Enter words separated by commas (e.g. cat,summer,moon)">
     <button id="generateBtn">Generate Password</button>
     <div id="resultBox" style="display:none;">
       <div id="result"></div>
       <span id="copyBtn" class="copy-btn">Copy</span>
       <div id="strength"></div>
+      <button id="addToVaultBtn">Add to Vault</button>
     </div>
-    <p style="font-size:12px;margin-top:10px;color:#8b949e;">All passwords are generated locally. Nothing is stored or shared.</p>
+
+    <!-- PASSWORD VAULT -->
+    <h2>Vault</h2>
+    <input type="text" id="searchVault" placeholder="Search by account/service">
+    <button id="searchBtn">Search</button>
+    <div id="vaultOutput"></div>
   </div>
 
   <script>
-    function generatePassword(words) {
-      const list = words.split(',').map(w => w.trim()).filter(Boolean);
-      if (list.length === 0) return "Please enter some words first.";
+    // ===== MASTER PASSWORD & VAULT =====
+    let masterPasswordKey = '';
+    let vault = {}; // decrypted vault in memory
 
-      const symbols = ['!', '@', '#', '$', '%', '&', '*'];
-      const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-      const randomNum = Math.floor(Math.random() * 1000);
-
-      // Random capitalization & shuffle
-      const mixed = list.map(word => {
-        let chars = word.split('');
-        for (let i = 0; i < chars.length; i++) {
-          if (Math.random() > 0.5) chars[i] = chars[i].toUpperCase();
-        }
-        return chars.join('');
-      });
-      mixed.sort(() => Math.random() - 0.5);
-
-      // Combine words + randomness
-      const base = mixed.join('');
-      const salt = Math.random().toString(36).substring(2, 6);
-      const password = base + randomSymbol + randomNum + salt;
-      return password;
+    function encryptVault() {
+      return CryptoJS.AES.encrypt(JSON.stringify(vault), masterPasswordKey).toString();
     }
 
-    document.getElementById('generateBtn').addEventListener('click', () => {
-      const userWords = document.getElementById('userWords').value;
-      const password = generatePassword(userWords);
+    function decryptVault(ciphertext) {
+      try {
+        let bytes = CryptoJS.AES.decrypt(ciphertext, masterPasswordKey);
+        return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+      } catch(e) { return {}; }
+    }
+
+    function loadVault() {
+      const stored = localStorage.getItem('vaultEncrypted');
+      vault = stored ? decryptVault(stored) : {};
+    }
+
+    function saveVault() {
+      localStorage.setItem('vaultEncrypted', encryptVault());
+    }
+
+    document.getElementById('unlockVaultBtn').addEventListener('click', () => {
+      const mp = document.getElementById('masterPassword').value;
+      if(!mp) return alert("Enter a master password");
+      masterPasswordKey = mp;
+      loadVault();
+      document.getElementById('masterBox').style.display='none';
+      document.getElementById('vaultContainer').style.display='block';
+      document.getElementById('masterPassword').value='';
+      updateVaultDisplay();
+    });
+
+    // ===== PASSWORD GENERATOR =====
+    function generatePassword(words) {
+      const list = words.split(',').map(w=>w.trim()).filter(Boolean);
+      if(list.length===0) return "Enter some words";
+
+      const symbols = ['!', '@', '#', '$', '%', '&', '*'];
+      const randomSymbol = symbols[Math.floor(Math.random()*symbols.length)];
+      const randomNum = Math.floor(Math.random()*1000);
+
+      const mixed = list.map(word=>{
+        let chars = word.split('');
+        for(let i=0;i<chars.length;i++) if(Math.random()>0.5) chars[i]=chars[i].toUpperCase();
+        return chars.join('');
+      });
+      mixed.sort(()=>Math.random()-0.5);
+
+      const salt = Math.random().toString(36).substring(2,6);
+      return mixed.join('') + randomSymbol + randomNum + salt;
+    }
+
+    document.getElementById('generateBtn').addEventListener('click',()=>{
+      const words = document.getElementById('userWords').value;
+      const password = generatePassword(words);
       const resultBox = document.getElementById('resultBox');
       const result = document.getElementById('result');
       const strength = document.getElementById('strength');
 
-      if (password.startsWith("Please")) {
-        resultBox.style.display = 'block';
-        result.textContent = password;
-        strength.textContent = '';
-        return;
-      }
-
-      resultBox.style.display = 'block';
+      resultBox.style.display='block';
       result.textContent = password;
 
       const analysis = zxcvbn(password);
-      strength.innerHTML = `
-        <strong>Strength:</strong> ${['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][analysis.score]}<br>
-        Estimated crack time: ${analysis.crack_times_display.offline_fast_hashing_1e10_per_second}
-      `;
+      strength.innerHTML = `<strong>Strength:</strong> ${['Very Weak','Weak','Fair','Strong','Very Strong'][analysis.score]}<br>Estimated crack time: ${analysis.crack_times_display.offline_fast_hashing_1e10_per_second}`;
     });
 
-    document.getElementById('copyBtn').addEventListener('click', () => {
+    // ===== COPY PASSWORD =====
+    document.getElementById('copyBtn').addEventListener('click',()=>{
       const password = document.getElementById('result').textContent;
       navigator.clipboard.writeText(password);
-      document.getElementById('copyBtn').textContent = "Copied!";
-      setTimeout(() => {
-        document.getElementById('copyBtn').textContent = "Copy";
-      }, 1500);
+      document.getElementById('copyBtn').textContent="Copied!";
+      setTimeout(()=>{document.getElementById('copyBtn').textContent="Copy";},1500);
+    });
+
+    // ===== ADD PASSWORD TO VAULT =====
+    document.getElementById('addToVaultBtn').addEventListener('click',()=>{
+      const pwd = document.getElementById('result').textContent;
+      const service = prompt("Enter service/account name to save this password:");
+      if(!service) return;
+      vault[service]=pwd;
+      saveVault();
+      updateVaultDisplay();
+      alert("Password saved to vault!");
+    });
+
+    // ===== UPDATE VAULT DISPLAY =====
+    function updateVaultDisplay(filter='') {
+      const output = document.getElementById('vaultOutput');
+      output.innerHTML='';
+      Object.keys(vault).forEach(key=>{
+        if(filter && !key.toLowerCase().includes(filter.toLowerCase())) return;
+        const div = document.createElement('div');
+        div.style.marginBottom='8px';
+        div.innerHTML=`<strong>${key}:</strong> ${vault[key]} <button onclick="deletePassword('${key}')">Delete</button>`;
+        output.appendChild(div);
+      });
+    }
+
+    // ===== DELETE PASSWORD =====
+    function deletePassword(service){
+      if(confirm(`Delete password for ${service}?`)){
+        delete vault[service];
+        saveVault();
+        updateVaultDisplay();
+      }
+    }
+
+    // ===== SEARCH =====
+    document.getElementById('searchBtn').addEventListener('click',()=>{
+      const term = document.getElementById('searchVault').value;
+      updateVaultDisplay(term);
     });
   </script>
 </body>
