@@ -10,42 +10,84 @@
     * {
       box-sizing: border-box;
       font-family: 'Inter', sans-serif;
+      scroll-behavior: smooth;
     }
+
     body {
       background: #0d1117;
       color: #c9d1d9;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* HERO SECTION */
+    .hero {
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      padding: 40px 20px;
-    }
-    h1, h3 {
+      justify-content: center;
       text-align: center;
-      margin: 0;
+      padding: 0 20px;
     }
-    .hero {
-      margin-bottom: 80px;
-    }
+
     .hero h1:first-child {
-      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-size: clamp(2.5rem, 6vw, 6rem);
       font-weight: 950;
       color: white;
+      margin: 0;
     }
+
     .hero h1.gradient {
-      font-size: clamp(2.3rem, 5.5vw, 4.8rem);
+      font-size: clamp(2.3rem, 5.5vw, 5.5rem);
       font-weight: 950;
       background: linear-gradient(90deg, #fbbf24, #f97316, #a78bfa, #60a5fa);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
+      margin: 0;
     }
+
     .hero h3 {
-      font-size: 1rem;
+      font-size: 1.2rem;
       color: #8b949e;
       font-weight: 400;
+      margin-top: 20px;
+      margin-bottom: 50px;
+      max-width: 600px;
     }
+
+    .scroll-down {
+      color: #58a6ff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      border: 2px solid #58a6ff;
+      padding: 10px 20px;
+      border-radius: 50px;
+      transition: background 0.3s;
+    }
+
+    .scroll-down:hover {
+      background: #58a6ff;
+      color: #0d1117;
+    }
+
+    /* GENERATOR SECTION */
+    section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 100px 20px;
+    }
+
+    section h1 {
+      color: #58a6ff;
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
     .container {
       background: #161b22;
       padding: 25px;
@@ -54,6 +96,7 @@
       width: 100%;
       max-width: 420px;
     }
+
     input {
       width: 100%;
       padding: 10px;
@@ -64,6 +107,7 @@
       margin-bottom: 15px;
       outline: none;
     }
+
     button {
       width: 100%;
       padding: 10px;
@@ -75,13 +119,16 @@
       cursor: pointer;
       transition: background 0.2s;
     }
+
     button:hover {
       background: #2ea043;
     }
+
     #resultBox {
       margin-top: 15px;
       display: none;
     }
+
     #result {
       background: #0d1117;
       padding: 10px;
@@ -90,10 +137,12 @@
       font-family: monospace;
       margin-bottom: 5px;
     }
+
     #strength {
       font-size: 14px;
       color: #8b949e;
     }
+
     .copy-btn {
       background: #30363d;
       color: #58a6ff;
@@ -104,6 +153,7 @@
       float: right;
       margin-bottom: 10px;
     }
+
     p.note {
       font-size: 12px;
       color: #8b949e;
@@ -113,14 +163,17 @@
   </style>
 </head>
 <body>
+  <!-- HERO -->
   <div class="hero">
     <h1>Replace Your Reused</h1>
     <h1 class="gradient">Passwords</h1>
     <h3>Don’t let one password unlock everything you own.</h3>
+    <a href="#generator" class="scroll-down">Scroll to Generator ↓</a>
   </div>
 
-  <section>
-    <h1 style="color:#58a6ff; font-size:1.5rem; margin-bottom:10px;">Smart Password Generator</h1>
+  <!-- GENERATOR SECTION -->
+  <section id="generator">
+    <h1>Smart Password Generator</h1>
     <div class="container">
       <input type="text" id="userWords" placeholder="Your words (e.g. star, 2030, moon)" />
       <button id="generateBtn">Generate Password</button>
@@ -156,23 +209,19 @@
 
       const symbols = ['!', '@', '#', '$', '%', '&', '*'];
       const randomSymbol = symbols[secureRandomInt(symbols.length)];
-      const randomNum = secureRandomInt(10000); // 0–9999 for extra entropy
+      const randomNum = secureRandomInt(10000);
 
-      const mixed = list.map(word => {
-        return word.split('').map(ch => (secureRandomInt(2) ? ch.toUpperCase() : ch)).join('');
-      });
+      const mixed = list.map(word =>
+        word.split('').map(ch => (secureRandomInt(2) ? ch.toUpperCase() : ch)).join('')
+      );
 
       fisherYatesShuffle(mixed);
 
-      // Create a stronger salt (8 random base36 chars)
       let salt = '';
       const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-      for (let i = 0; i < 8; i++) {
-        salt += chars[secureRandomInt(chars.length)];
-      }
+      for (let i = 0; i < 8; i++) salt += chars[secureRandomInt(chars.length)];
 
-      const password = mixed.join('') + randomSymbol + randomNum + salt;
-      return password;
+      return mixed.join('') + randomSymbol + randomNum + salt;
     }
 
     document.getElementById('generateBtn').addEventListener('click', () => {
