@@ -1,12 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Replace the Reused</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
-
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
   <style>
     * {
@@ -17,16 +15,36 @@
       background: #0d1117;
       color: #c9d1d9;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
       flex-direction: column;
-      padding: 20px;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
     }
-    h1 {
-      font-weight: 600;
-      color: #58a6ff;
-      margin-bottom: 10px;
+    h1, h3 {
+      text-align: center;
+      margin: 0;
+    }
+    .hero {
+      margin-bottom: 80px;
+    }
+    .hero h1:first-child {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 950;
+      color: white;
+    }
+    .hero h1.gradient {
+      font-size: clamp(2.3rem, 5.5vw, 4.8rem);
+      font-weight: 950;
+      background: linear-gradient(90deg, #fbbf24, #f97316, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .hero h3 {
+      font-size: 1rem;
+      color: #8b949e;
+      font-weight: 400;
     }
     .container {
       background: #161b22;
@@ -34,7 +52,7 @@
       border-radius: 16px;
       box-shadow: 0 0 20px rgba(88,166,255,0.1);
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
     }
     input {
       width: 100%;
@@ -60,16 +78,19 @@
     button:hover {
       background: #2ea043;
     }
-    #result {
+    #resultBox {
       margin-top: 15px;
+      display: none;
+    }
+    #result {
       background: #0d1117;
       padding: 10px;
       border-radius: 8px;
       word-break: break-all;
       font-family: monospace;
+      margin-bottom: 5px;
     }
     #strength {
-      margin-top: 10px;
       font-size: 14px;
       color: #8b949e;
     }
@@ -81,65 +102,76 @@
       cursor: pointer;
       font-size: 12px;
       float: right;
+      margin-bottom: 10px;
+    }
+    p.note {
+      font-size: 12px;
+      color: #8b949e;
+      margin-top: 10px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-<!-- Big Header -->
-<div style="text-align:center; margin-bottom:400px;">
-  <h1 style="font-size:7rem; font-weight:950; margin-bottom:5px; color:white;">
-    Replace Your Reused
-  </h1>
-  <h1 style="font-size:6.5rem; font-weight:950; margin-top:0; margin-bottom:2px;
-             background: linear-gradient(90deg, #fbbf24, #f97316, #a78bfa, #60a5fa);
-             -webkit-background-clip: text;
-             -webkit-text-fill-color: transparent;">
-    Passwords
-  </h1>
-  <h3 style="font-size:1.2rem; color:#8b949e; font-weight:400;">
-    Don’t let one password unlock everything you own.
-  </h3>
-</div>
-
-<section style="margin-bottom:200px;">
-  <h1>Smart Password Generator</h1>
-  <div class="container">
-    <input type="text" id="userWords" placeholder="Your words (e.g. star, 2030, moon)" />
-    <button id="generateBtn">Generate Password</button>
-    <div id="resultBox" style="display:none;">
-      <div id="result"></div>
-      <span id="copyBtn" class="copy-btn">Copy</span>
-      <div id="strength"></div>
-    </div>
-    <p style="font-size:12px;margin-top:10px;color:#8b949e;">
-      All passwords are generated locally. Nothing is stored or shared.
-    </p>
+  <div class="hero">
+    <h1>Replace Your Reused</h1>
+    <h1 class="gradient">Passwords</h1>
+    <h3>Don’t let one password unlock everything you own.</h3>
   </div>
-</section>
+
+  <section>
+    <h1 style="color:#58a6ff; font-size:1.5rem; margin-bottom:10px;">Smart Password Generator</h1>
+    <div class="container">
+      <input type="text" id="userWords" placeholder="Your words (e.g. star, 2030, moon)" />
+      <button id="generateBtn">Generate Password</button>
+      <div id="resultBox">
+        <div id="result"></div>
+        <span id="copyBtn" class="copy-btn">Copy</span>
+        <div id="strength"></div>
+      </div>
+      <p class="note">
+        All passwords are generated locally. Nothing is stored or shared.
+      </p>
+    </div>
+  </section>
 
   <script>
+    function secureRandomInt(max) {
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      return array[0] % max;
+    }
+
+    function fisherYatesShuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = secureRandomInt(i + 1);
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
     function generatePassword(words) {
-      const list = words.split(',').map(w => w.trim()).filter(Boolean);
+      const list = words.split(/[\s,]+/).map(w => w.trim()).filter(Boolean);
       if (list.length === 0) return "Please enter some words first.";
 
       const symbols = ['!', '@', '#', '$', '%', '&', '*'];
-      const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-      const randomNum = Math.floor(Math.random() * 1000);
+      const randomSymbol = symbols[secureRandomInt(symbols.length)];
+      const randomNum = secureRandomInt(10000); // 0–9999 for extra entropy
 
-      // Random capitalization & shuffle
       const mixed = list.map(word => {
-        let chars = word.split('');
-        for (let i = 0; i < chars.length; i++) {
-          if (Math.random() > 0.5) chars[i] = chars[i].toUpperCase();
-        }
-        return chars.join('');
+        return word.split('').map(ch => (secureRandomInt(2) ? ch.toUpperCase() : ch)).join('');
       });
-      mixed.sort(() => Math.random() - 0.5);
 
-      // Combine words + randomness
-      const base = mixed.join('');
-      const salt = Math.random().toString(36).substring(2, 6);
-      const password = base + randomSymbol + randomNum + salt;
+      fisherYatesShuffle(mixed);
+
+      // Create a stronger salt (8 random base36 chars)
+      let salt = '';
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      for (let i = 0; i < 8; i++) {
+        salt += chars[secureRandomInt(chars.length)];
+      }
+
+      const password = mixed.join('') + randomSymbol + randomNum + salt;
       return password;
     }
 
@@ -150,32 +182,40 @@
       const result = document.getElementById('result');
       const strength = document.getElementById('strength');
 
+      resultBox.style.display = 'block';
+      result.textContent = password;
+
       if (password.startsWith("Please")) {
-        resultBox.style.display = 'block';
-        result.textContent = password;
         strength.textContent = '';
         return;
       }
 
-      resultBox.style.display = 'block';
-      result.textContent = password;
-
-      const analysis = zxcvbn(password);
-      strength.innerHTML = `
-        <strong>Strength:</strong> ${['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][analysis.score]}<br>
-        Estimated crack time: ${analysis.crack_times_display.offline_fast_hashing_1e10_per_second}
-      `;
+      try {
+        const analysis = typeof zxcvbn === 'function' ? zxcvbn(password) : null;
+        if (analysis) {
+          strength.innerHTML = `
+            <strong>Strength:</strong> ${['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][analysis.score]}<br>
+            Estimated crack time: ${analysis.crack_times_display.offline_fast_hashing_1e10_per_second}
+          `;
+        } else {
+          strength.textContent = 'Strength check unavailable (zxcvbn not loaded).';
+        }
+      } catch {
+        strength.textContent = 'Error analyzing password strength.';
+      }
     });
 
     document.getElementById('copyBtn').addEventListener('click', () => {
       const password = document.getElementById('result').textContent;
-      navigator.clipboard.writeText(password);
-      document.getElementById('copyBtn').textContent = "Copied!";
-      setTimeout(() => {
-        document.getElementById('copyBtn').textContent = "Copy";
-      }, 1500);
+      navigator.clipboard.writeText(password).then(() => {
+        document.getElementById('copyBtn').textContent = "Copied!";
+        setTimeout(() => {
+          document.getElementById('copyBtn').textContent = "Copy";
+        }, 1500);
+      }).catch(() => {
+        alert("Could not copy password. Try manually selecting and copying it.");
+      });
     });
   </script>
 </body>
 </html>
-
